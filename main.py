@@ -4,11 +4,26 @@ from openai import OpenAI
 from loguru import logger
 from classes import *
 from models import *
+from fastapi.middleware.cors import CORSMiddleware
+
 
 app = FastAPI(
     title="Soflo Atlas Backend Server",
     description="Backend server for Soflo Tech Hub Hackathon 2025 Project - Soflo Atlas",
     version="0.1.0"
+)
+
+origins = [
+    "http://localhost",
+    "http://localhost:5173",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
