@@ -1,11 +1,9 @@
-from fastapi import FastAPI
+from fastapi.responses import JSONResponse
+from fastapi import FastAPI, HTTPException, Query
 from openai import OpenAI
 from loguru import logger
 from classes import *
 from models import *
-
-
-# TODO - add logging 
 
 app = FastAPI(
     title="Soflo Atlas Backend Server",
@@ -14,12 +12,29 @@ app = FastAPI(
 )
 
 client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+attom = AttomManager()
 
+@app.get("/heatmap-data")
+async def get_heatmap_data(
+    zip_code: str = Query(..., description="5-digit ZIP (e.g., 33068)"),
+    section: str = Query(..., description="Top-level section, e.g. 'naturalDisasters'"),
+    field: str = Query(..., description="Field name, e.g. 'hurricane_Index'")
+):
+    # Returns: [{lat: number, lng: number, val: number}, ...]
 
-@app.get("/community-data")
-async def get_data(criteria: str) -> DataResponse:
-    # TODO - call the Attom client/manager to get processed community criteria data
-    return None
+    try:
+        value_path = f"{section}.{field}"
+        heatmap = attom.get_heat_map_json(zip_code, value_path)
+        return JSONResponse(content=heatmap)
+    except KeyError as e:
+        # The section/field doesn't exist in the 'community' payload
+        raise HTTPException(status_code=400, detail=f"Unknown path: {value_path} (missing key {e!s})")
+    except ValueError as e:
+        # Unsupported geometry type, non-numeric value, etc.
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        # Network/auth errors from ATTOM, etc.
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @app.post("/insights")  
