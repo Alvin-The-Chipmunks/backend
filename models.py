@@ -2,8 +2,12 @@ from pydantic import BaseModel
 from typing import List
 
 
-class PromptRequest(BaseModel):
-    critiera: List[str]
+class InsightsRequest(BaseModel):
+    category: str
+    zipcode: str
+    
+class InsightsResponse(BaseModel):
+    content: str
 
 class DataResponse(BaseModel):
     # TODO - need to update this after confirming the schema needed on the frontend
