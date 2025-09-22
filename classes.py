@@ -1,7 +1,6 @@
 from dotenv import load_dotenv
 from loguru import logger
-import os, requests, json
-from typing import Optional, Tuple
+import os, requests
 load_dotenv()
 
 

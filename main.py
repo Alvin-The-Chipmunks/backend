@@ -52,14 +52,21 @@ async def get_heatmap_data(
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.post("/insights")  
+@app.post("/insights", response_model=InsightsResponse)  
 async def get_ai_insights(body: InsightsRequest) -> InsightsResponse:
-    logger.info(f"Sending prompt request for '{body.category}' in zipcode '{body.zipcode}'")
-    response = client.responses.create(
-        model="gpt-4o",
-        instructions="You are an insightful guru providing knowledge about various factors across South Florida to locals and prospective home owners",
-        input=f"Give me a 2 sentence summary about insights on {body.category} in the city belonging to zipcode {body.zipcode}. Do not mention the zipcode in your response. You don't need to mention that the city is located in South Florida. Refer to the city by name only.",
-    )
-    logger.info("Successfully received prompt response")
+    try:
+        logger.info(f"Sending prompt request for '{body.category}' in zipcode '{body.zipcode}'")
+        response = client.responses.create(
+            model="gpt-4o",
+            instructions="You are an insightful guru providing knowledge about various factors across South Florida to locals and prospective home owners",
+            input=f'''Give me a 2 sentence summary about insights on {body.category} in the city belonging to zipcode {body.zipcode}.
+                    Do not mention the zipcode in your response. You don't need to mention that the city is located in South Florida. 
+                    Refer to the city by name only.''',
+        )
+        logger.info("Successfully received prompt response")
+        return InsightsResponse(content=response.output_text)
     
-    return {"content": response.output_text}
+    except Exception as exc:
+        logger.error(f"An exception occurred: {exc}")
+        raise HTTPException(status_code=500, detail="Insights could not be generated at this time. Please try again later.")
+    
